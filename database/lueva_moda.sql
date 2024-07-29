@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 29-07-2024 a las 17:06:26
+-- Tiempo de generación: 29-07-2024 a las 19:43:55
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.0.30
 
@@ -31,6 +31,13 @@ CREATE TABLE `categoria_productos` (
   `id_categoria` int(11) NOT NULL,
   `descripcion_categoria` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `categoria_productos`
+--
+
+INSERT INTO `categoria_productos` (`id_categoria`, `descripcion_categoria`) VALUES
+(1, 'Moldes');
 
 -- --------------------------------------------------------
 
@@ -72,6 +79,13 @@ CREATE TABLE `productos` (
   `precio_producto` decimal(10,2) DEFAULT 0.00,
   `listado` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `productos`
+--
+
+INSERT INTO `productos` (`id_producto`, `nombre_producto`, `descripcion_producto`, `id_categoria`, `costo`, `precio_producto`, `listado`) VALUES
+(2, 'Maceta Espiral', 'Disfruta de esta maceta con una forma unica', 1, 2000.00, 4000.00, 1);
 
 -- --------------------------------------------------------
 
@@ -152,7 +166,7 @@ ALTER TABLE `ventas`
 -- AUTO_INCREMENT de la tabla `categoria_productos`
 --
 ALTER TABLE `categoria_productos`
-  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `gastos`
@@ -170,7 +184,7 @@ ALTER TABLE `imagenes_productos`
 -- AUTO_INCREMENT de la tabla `productos`
 --
 ALTER TABLE `productos`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `stock`
