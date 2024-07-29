@@ -25,5 +25,5 @@ buildNumber.properties
 .mvn/timing.properties
 
 # VS Code
-.vscode/
+/.vscode/
 .history/
