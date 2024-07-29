@@ -27,3 +27,9 @@ buildNumber.properties
 # VS Code
 /.vscode/
 .history/
+
+# Ignorar todo en la carpeta target
+target/*
+
+# Exceptuar el archivo api_lueva.war
+!target/api_lueva.war

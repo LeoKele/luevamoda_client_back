@@ -30,13 +30,11 @@ public class ControladorAdmin extends ControladorBase {
         if (idParam != null) {
             // Si se proporciona idParam, se incluye en la consulta
             query = "SELECT * FROM productos WHERE id_producto = ? AND listado = ?";
-        } else {
+        } else if (listadoParam != null) {
             // Si no se proporciona idParam, se usa el valor de listadoParam si está presente
-            if (listadoParam != null) {
-                query = "SELECT * FROM productos WHERE listado = ?";
-            } else {
-                query = "SELECT * FROM productos"; // Consulta por defecto si no se proporciona listadoParam
-            }
+            query = "SELECT * FROM productos WHERE listado = ?";
+        } else {
+            query = "SELECT * FROM productos"; // Consulta por defecto si no se proporciona listadoParam
         }
 
         //Try-with-resources para cerrar correctamente la conexion
@@ -47,10 +45,9 @@ public class ControladorAdmin extends ControladorBase {
             int paramIndex = 1;
             if (idParam != null) {
                 statement.setLong(paramIndex++, Long.parseLong(idParam));
-            }
-            if (listadoParam != null || idParam == null) {
-                // Si listadoParam no es nulo o no hay idParam, agregar el parámetro de listado
-                statement.setInt(paramIndex, Integer.parseInt(listadoParam != null ? listadoParam : "1")); // Por defecto listado = 1 si no se especifica
+                statement.setInt(paramIndex, Integer.parseInt(listadoParam != null ? listadoParam : "1"));
+            } else if (listadoParam != null) {
+                statement.setInt(paramIndex, Integer.parseInt(listadoParam));
             }
 
             ResultSet resultSet = statement.executeQuery();
