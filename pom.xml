@@ -4,7 +4,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.ar.apiPopi</groupId>
+  <groupId>com.ar.apiLueva</groupId>
   <artifactId>api</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>war</packaging>
@@ -91,6 +91,6 @@
      
     </plugins>
     <!-- Cambio el nombre del archivo war generado -->
-    <finalName>api</finalName>
+    <finalName>api_lueva</finalName>
   </build>
 </project>
