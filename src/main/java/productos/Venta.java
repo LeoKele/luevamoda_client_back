@@ -1,28 +1,33 @@
 package productos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDate;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Venta {
     private Long id;
+    private Long idCliente;
+    private String nombreCliente;
     private Long idProducto;
-    private String nombre;
+    private String nombreProducto;
     private LocalDate fechaVenta;
     private Long cantidad;
     private Double precioUnitario;
     private Double total;
-    private Double ganancia;
+
 
     public Venta(){};
 
-    public Venta(Long id, Long idProducto, String nombre,LocalDate fechaVenta, Long cantidad, Double precioUnitario,Double total, Double ganancia){
+    public Venta(Long id, Long idCliente, String nombreCliente, Long idProducto, String nombreProducto,LocalDate fechaVenta, Long cantidad, Double precioUnitario,Double total){
         this.id = id;
+        this.idCliente = idCliente;
+        this.nombreCliente = nombreCliente;
         this.idProducto = idProducto;
-        this.nombre = nombre;
+        this.nombreProducto = nombreProducto;
         this.fechaVenta = fechaVenta;
         this.cantidad = cantidad;
         this.precioUnitario = precioUnitario;
         this.total = total;
-        this.ganancia = ganancia;
     }
 
     //getter y setter
@@ -32,6 +37,20 @@ public class Venta {
     public void setId(Long id){
         this.id = id;
     }
+    public Long getIdCliente(){
+        return idCliente;
+    }
+    public void setIdCliente(Long idCliente){
+        this.idCliente = idCliente;
+    }
+
+    public String getNombreCliente(){
+        return nombreCliente;
+    }
+
+    public void setNombreCliente(String nombreCliente){
+        this.nombreCliente = nombreCliente;
+    }
 
     public Long getIdProducto(){
         return idProducto;
@@ -40,12 +59,12 @@ public class Venta {
         this.idProducto = idProducto;
     }
 
-    public String getNombre(){
-        return nombre;
+    public String getNombreProducto(){
+        return nombreProducto;
     }
 
-    public void setNombre(String nombre){
-        this.nombre = nombre;
+    public void setNombreProducto(String nombreProducto){
+        this.nombreProducto = nombreProducto;
     }
 
     public LocalDate getFechaVenta(){
@@ -78,13 +97,6 @@ public class Venta {
         this.total = total;
     }
 
-    public Double getGanancia(){
-        return ganancia;
-    }
-
-    public void setGanancia(Double ganancia){
-        this.ganancia = ganancia;
-    }
 
 
 }

@@ -1,8 +1,11 @@
 package productos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 // import java.util.ArrayList;
 // import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProductoIndex extends ProductoBase{
     private String imagen;
 
@@ -10,8 +13,8 @@ public class ProductoIndex extends ProductoBase{
     //Constructor vacio necesario para deserializacion de JSON
     public ProductoIndex() {}
 
-    public ProductoIndex(Long id, String nombre, String descripcion, double precio, String imagen) {
-        super(id, nombre, descripcion, precio);
+    public ProductoIndex(Long id, String nombre, Long idCategoria, String imagen) {
+        super(id,nombre,idCategoria);
         this.imagen = imagen;
     }
     

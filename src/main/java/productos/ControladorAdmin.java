@@ -57,15 +57,21 @@ public class ControladorAdmin extends ControladorBase {
             while (resultSet.next()) {
                 ProductoAdmin producto = new ProductoAdmin(
                         resultSet.getLong("id_producto"),
+                        resultSet.getString("cliente"),
                         resultSet.getString("nombre_producto"),
-                        resultSet.getString("descripcion_producto"),
-                        resultSet.getDouble("precio_producto"),
                         resultSet.getLong("id_categoria"),
-                        resultSet.getDouble("costo"),
+                        resultSet.getLong("medida_busto"),
+                        resultSet.getLong("medida_cintura"),
+                        resultSet.getLong("medida_cadera"),
+                        resultSet.getDouble("precio_molde_base"),
+                        resultSet.getDouble("precio_molde_digital"),
+                        resultSet.getDouble("precio_molde_cartulina"),
+                        resultSet.getLong("cantidad_talles"),
                         resultSet.getInt("listado")
                 );
                 productos.add(producto);
             }
+            
 
             ObjectMapper mapper = new ObjectMapper();
             String json = mapper.writeValueAsString(productos);
@@ -84,18 +90,23 @@ public class ControladorAdmin extends ControladorBase {
 
         try (Connection conn = obtenerConexion();
              PreparedStatement statement = conn.prepareStatement(
-                "INSERT INTO productos (nombre_producto, descripcion_producto, id_categoria, precio_producto, costo, listado) VALUES (?, ?, ?, ?, ?, ?)", 
+                "INSERT INTO productos (cliente, nombre_producto, id_categoria, medida_busto, medida_cintura, medida_cadera, precio_molde_base,  precio_molde_digital, precio_molde_cartulina,cantidad_talles, listado) VALUES (?, ?, ?, ?, ?, ?,?,?,?,?,?)", 
                 Statement.RETURN_GENERATED_KEYS)) {
 
             ObjectMapper mapper = new ObjectMapper();
             ProductoAdmin producto = mapper.readValue(request.getInputStream(), ProductoAdmin.class);
 
-            statement.setString(1, producto.getNombre());
-            statement.setString(2, producto.getDescripcion());
+            statement.setString(1, producto.getCliente());
+            statement.setString(2, producto.getNombre());
             statement.setLong(3, producto.getIdCategoria());
-            statement.setDouble(4, producto.getPrecio());
-            statement.setDouble(5, producto.getCosto());
-            statement.setInt(6, producto.getListado());
+            statement.setLong(4, producto.getMedidaBusto());
+            statement.setLong(5, producto.getMedidaCintura());
+            statement.setLong(6, producto.getMedidaCadera());
+            statement.setDouble(7, producto.getPrecioMoldeBase());
+            statement.setDouble(8, producto.getPrecioMoldeDigital());
+            statement.setDouble(9, producto.getPrecioMoldeCartulina());
+            statement.setLong(10, producto.getCantidadTalles());
+            statement.setInt(11, producto.getListado());
             statement.executeUpdate();
 
             try (ResultSet rs = statement.getGeneratedKeys()) {
@@ -119,7 +130,7 @@ public class ControladorAdmin extends ControladorBase {
 
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         configurarCORS(response);
-        String query = "UPDATE productos SET nombre_producto = ?, descripcion_producto = ?, id_categoria = ?, precio_producto = ?, costo = ?, listado = ? WHERE id_producto = ?";
+        String query = "UPDATE productos SET cliente = ?, nombre_producto = ?, id_categoria = ?, medida_busto = ?,medida_cintura = ?,medida_cadera = ?, precio_molde_base = ?, precio_molde_digital = ?, precio_molde_cartulina = ?, cantidad_talles = ?, listado = ? WHERE id_producto = ?";
         try(Connection conn = obtenerConexion();
         PreparedStatement statement = conn.prepareStatement(query)) {
 
@@ -128,13 +139,18 @@ public class ControladorAdmin extends ControladorBase {
 
 
             // Establecer los parámetros de la consulta de actualización
-            statement.setString(1, producto.getNombre());
-            statement.setString(2, producto.getDescripcion());
+            statement.setString(1, producto.getCliente());
+            statement.setString(2, producto.getNombre());
             statement.setLong(3, producto.getIdCategoria());
-            statement.setDouble(4, producto.getPrecio());
-            statement.setDouble(5, producto.getCosto());
-            statement.setInt(6, producto.getListado());
-            statement.setLong(7, producto.getId());
+            statement.setLong(4, producto.getMedidaBusto());
+            statement.setLong(5, producto.getMedidaCintura());
+            statement.setLong(6, producto.getMedidaCadera());
+            statement.setDouble(7, producto.getPrecioMoldeBase());
+            statement.setDouble(8, producto.getPrecioMoldeDigital());
+            statement.setDouble(9, producto.getPrecioMoldeCartulina());
+            statement.setLong(10, producto.getCantidadTalles());
+            statement.setInt(11, producto.getListado());
+            statement.setLong(12, producto.getId());
 
             // Ejecutar la consulta de actualización
             int rowsUpdated = statement.executeUpdate();
