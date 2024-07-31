@@ -3,15 +3,17 @@ package productos;
 public class Stock {
     private long id;
     private Long idProducto;
+    private String nombreCliente;
     private String nombre;
     private Long cantidad;
 
 
     public Stock(){};
 
-    public Stock(long id, Long idProducto, String nombre, Long cantidad){
+    public Stock(long id, Long idProducto, String nombreCliente, String nombre, Long cantidad){
         this.id = id;
         this.idProducto = idProducto;
+        this.nombreCliente = nombreCliente;
         this.nombre = nombre;
         this.cantidad = cantidad;
     }
@@ -31,6 +33,12 @@ public class Stock {
         this.idProducto = idProducto;
     }
 
+    public String getNombreCliente(){
+        return nombreCliente;
+    }
+    public void setNombreCliente(String nombreCliente){
+        this.nombreCliente = nombreCliente;
+    }
     public String getNombre(){
         return nombre;
     }

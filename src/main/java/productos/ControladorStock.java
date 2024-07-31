@@ -36,9 +36,9 @@ public class ControladorStock extends ControladorBase{
         String idParam = request.getParameter("id");
 
         if (idParam != null){
-            query = "SELECT s.id_stock, s.id_producto, p.nombre_producto, s.cantidad FROM stock s INNER JOIN productos p ON s.id_producto = p.id_producto WHERE id_stock = ? ORDER BY s.id_producto ASC";
+            query = "SELECT s.id_stock, s.id_producto,  p.cliente, p.nombre_producto, s.cantidad FROM stock s INNER JOIN productos p ON s.id_producto = p.id_producto WHERE id_stock = ? ORDER BY s.id_producto ASC";
         } else {
-            query = "SELECT s.id_stock, s.id_producto, p.nombre_producto, s.cantidad FROM stock s INNER JOIN productos p ON s.id_producto = p.id_producto ORDER BY s.id_producto ASC";
+            query = "SELECT s.id_stock, s.id_producto,  p.cliente, p.nombre_producto, s.cantidad FROM stock s INNER JOIN productos p ON s.id_producto = p.id_producto ORDER BY s.id_producto ASC";
         }
 
         //Try-with-resources para cerrar correctamente la conexion
@@ -55,6 +55,7 @@ public class ControladorStock extends ControladorBase{
                 Stock stock = new Stock(
                         resultSet.getLong("id_stock"),
                         resultSet.getLong("id_producto"),
+                        resultSet.getString("cliente"),
                         resultSet.getString("nombre_producto"),
                         resultSet.getLong("cantidad")
                 );
@@ -101,13 +102,12 @@ public class ControladorStock extends ControladorBase{
                 if (generatedKeys.next()) {
                     long idStock = generatedKeys.getLong(1);
                     
-                    // Crear la instancia de respuesta con los campos necesarios
-                    StockResponse stockResponse = new StockResponse(idStock, stock.getIdProducto(), stock.getCantidad());
+                
                     
-                    // Configuramos la respuesta como JSON
+                    // Crear una respuesta JSON simple con solo el ID generado
+                    String jsonResponse = String.format("{\"id\": %d}", idStock);
                     response.setContentType("application/json");
-                    String json = mapper.writeValueAsString(stockResponse);
-                    response.getWriter().write(json);
+                    response.getWriter().write(jsonResponse);
                 } else {
                     throw new SQLException("Creating stock failed, no ID obtained.");
                 }

@@ -90,9 +90,20 @@ public class ControladorCategoria extends ControladorBase{
             response.setStatus(HttpServletResponse.SC_CREATED);
 
         } catch (SQLException e) {
-            manejarError(response, e);
+            e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+            
+            // Verificar si es un error de entrada duplicada
+            if (e.getSQLState().startsWith("23")) { // Código de estado SQL para violaciones de restricción (incluyendo entrada duplicada)
+                response.setStatus(HttpServletResponse.SC_CONFLICT); // 409 Conflict
+                response.getWriter().write("{\"message\": \"Error: Categoria duplicada.\"}");
+            } else {
+                response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}"); // Devolver el mensaje de error de la base de datos
+            }
         } catch (IOException e) {
-            manejarError(response, e);
+            e.printStackTrace(); // Imprimir el error en caso de problemas de entrada/salida
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}"); // Devolver el mensaje de error de entrada/salida
         }
     }
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -122,9 +133,17 @@ public class ControladorCategoria extends ControladorBase{
         } catch (SQLException e) {
             e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+            // Verificar si es un error de entrada duplicada
+            if (e.getSQLState().startsWith("23")) { // Código de estado SQL para violaciones de restricción (incluyendo entrada duplicada)
+                response.setStatus(HttpServletResponse.SC_CONFLICT); // 409 Conflict
+                response.getWriter().write("{\"message\": \"Error: Categoria duplicada.\"}");
+            } else {
+                response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}"); // Devolver el mensaje de error de la base de datos
+            }
         } catch (IOException e) {
             e.printStackTrace(); // Imprimir el error en caso de problemas de entrada/salida
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}"); // Devolver el mensaje de error de entrada/salida
         }
     }
 

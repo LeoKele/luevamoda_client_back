@@ -122,9 +122,13 @@ public class ControladorAdmin extends ControladorBase {
             response.setStatus(HttpServletResponse.SC_CREATED);
 
         } catch (SQLException e) {
-            manejarError(response, e);
+            String mensajeError = e.getMessage();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
         } catch (IOException e) {
-            manejarError(response, e);
+            String mensajeError = "Error de entrada/salida: " + e.getMessage();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
         }
     }
 
@@ -165,9 +169,10 @@ public class ControladorAdmin extends ControladorBase {
         } catch (SQLException e) {
             e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
-        } catch (IOException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas de entrada/salida
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+        }catch (IOException e) {
+            String mensajeError = "Error de entrada/salida: " + e.getMessage();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
         }
     }
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -207,7 +212,12 @@ public class ControladorAdmin extends ControladorBase {
             e.printStackTrace(); // Imprimir el error en caso de problemas con el formato del número
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // Configurar el código de estado de la respuesta HTTP como 400 (BAD REQUEST)
             response.getWriter().write("{\"message\": \"ID de producto inválido.\"}");
+        }catch (IOException e) {
+            String mensajeError = "Error de entrada/salida: " + e.getMessage();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
         }
+        
     }
         
 }

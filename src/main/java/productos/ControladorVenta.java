@@ -143,85 +143,86 @@ public class ControladorVenta extends ControladorBase {
     
 
 
-    // protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    //     configurarCORS(response);
-    //     String query = "UPDATE ventas SET id_producto = ?, fecha_venta = ?, cantidad = ?, precio_unitario = ? WHERE id_venta = ?";
-    //     try(Connection conn = obtenerConexion();
-    //     PreparedStatement statement = conn.prepareStatement(query)) {
+    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        configurarCORS(response);
+        String query = "UPDATE ventas SET id_producto = ?, id_cliente = ? ,fecha_venta = ?, cantidad = ?, precio_unitario = ? WHERE id_venta = ?";
+        try(Connection conn = obtenerConexion();
+        PreparedStatement statement = conn.prepareStatement(query)) {
 
-    //         ObjectMapper mapper = JsonConfig.createObjectMapper();  // Crear un objeto ObjectMapper para convertir JSON a objetos Java
-    //         Venta venta = mapper.readValue(request.getInputStream(), Venta.class);  // Convertir el JSON de la solicitud a un objeto Pelicula
+            ObjectMapper mapper = JsonConfig.createObjectMapper();  // Crear un objeto ObjectMapper para convertir JSON a objetos Java
+            Venta venta = mapper.readValue(request.getInputStream(), Venta.class);  // Convertir el JSON de la solicitud a un objeto Pelicula
 
-    //         // Verificar si el producto existe antes de realizar la operación
-    //         if (!productoService.productoExiste(venta.getIdProducto())) {
-    //             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-    //             response.getWriter().write("{\"message\": \"El ID de producto no existe.\"}");
-    //             return;
-    //         }
+            // Verificar si el producto existe antes de realizar la operación
+            if (!productoService.productoExiste(venta.getIdProducto())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("{\"message\": \"El ID de venta no existe.\"}");
+                return;
+            }
 
-    //         // Establecer los parámetros de la consulta de actualización
-    //         statement.setLong(1, venta.getIdProducto());
-    //         statement.setDate(2, Date.valueOf(venta.getFechaVenta()));
-    //         statement.setLong(3, venta.getCantidad());
-    //         statement.setDouble(4, venta.getPrecioUnitario());
-    //         statement.setLong(5, venta.getId());
+            // Establecer los parámetros de la consulta de actualización
+            statement.setLong(1, venta.getIdProducto());
+            statement.setLong(2, venta.getIdCliente());
+            statement.setDate(3, Date.valueOf(venta.getFechaVenta()));
+            statement.setLong(4, venta.getCantidad());
+            statement.setDouble(5, venta.getPrecioUnitario());
+            statement.setLong(6, venta.getId());
 
-    //         // Ejecutar la consulta de actualización
-    //         int rowsUpdated = statement.executeUpdate();
+            // Ejecutar la consulta de actualización
+            int rowsUpdated = statement.executeUpdate();
 
-    //         if (rowsUpdated > 0) {
-    //             response.setStatus(HttpServletResponse.SC_OK); // Configurar el código de estado de la respuesta HTTP como 200 (OK)
-    //             response.getWriter().write("{\"message\": \"Venta actualizada exitosamente.\"}");
-    //         } else {
-    //             response.setStatus(HttpServletResponse.SC_NOT_FOUND); // Configurar el código de estado de la respuesta HTTP como 404 (NOT FOUND)
-    //             response.getWriter().write("{\"message\": \"Venta no encontrada.\"}");
-    //         }
-    //     } catch (SQLException e) {
-    //         e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
-    //         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
-    //     } catch (IOException e) {
-    //         e.printStackTrace(); // Imprimir el error en caso de problemas de entrada/salida
-    //         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
-    //     }
-    // }
-    // protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-    //     // Configurar cabeceras CORS
-    //     configurarCORS(response);
-    //     String query = "DELETE FROM ventas WHERE id_venta = ?";
+            if (rowsUpdated > 0) {
+                response.setStatus(HttpServletResponse.SC_OK); // Configurar el código de estado de la respuesta HTTP como 200 (OK)
+                response.getWriter().write("{\"message\": \"Venta actualizada exitosamente.\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND); // Configurar el código de estado de la respuesta HTTP como 404 (NOT FOUND)
+                response.getWriter().write("{\"message\": \"Venta no encontrada.\"}");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+        } catch (IOException e) {
+            e.printStackTrace(); // Imprimir el error en caso de problemas de entrada/salida
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+        }
+    }
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Configurar cabeceras CORS
+        configurarCORS(response);
+        String query = "DELETE FROM ventas WHERE id_venta = ?";
 
-    //     try (Connection conn = obtenerConexion();
-    //     PreparedStatement statement = conn.prepareStatement(query)) {
+        try (Connection conn = obtenerConexion();
+        PreparedStatement statement = conn.prepareStatement(query)) {
 
-    //         String idParam = request.getParameter("id");  // Obtener el parámetro de consulta 'id'
-    //         if (idParam == null) {
-    //             response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // Configurar el código de estado de la respuesta HTTP como 400 (BAD REQUEST)
-    //             response.getWriter().write("{\"message\": \"ID de venta no proporcionado.\"}");
-    //             return;
-    //         }
+            String idParam = request.getParameter("id");  // Obtener el parámetro de consulta 'id'
+            if (idParam == null) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // Configurar el código de estado de la respuesta HTTP como 400 (BAD REQUEST)
+                response.getWriter().write("{\"message\": \"ID de venta no proporcionado.\"}");
+                return;
+            }
 
-    //         int idVenta = Integer.parseInt(idParam);
+            int idVenta = Integer.parseInt(idParam);
 
-    //         // Establecer los parámetros de la consulta de eliminación
-    //         statement.setInt(1, idVenta);
+            // Establecer los parámetros de la consulta de eliminación
+            statement.setInt(1, idVenta);
 
-    //         // Ejecutar la consulta de eliminación
-    //         int rowsDeleted = statement.executeUpdate();
+            // Ejecutar la consulta de eliminación
+            int rowsDeleted = statement.executeUpdate();
 
-    //         if (rowsDeleted > 0) {
-    //             response.setStatus(HttpServletResponse.SC_OK); // Configurar el código de estado de la respuesta HTTP como 200 (OK)
-    //             response.getWriter().write("{\"message\": \"Venta eliminada exitosamente.\"}");
-    //         } else {
-    //             response.setStatus(HttpServletResponse.SC_NOT_FOUND); // Configurar el código de estado de la respuesta HTTP como 404 (NOT FOUND)
-    //             response.getWriter().write("{\"message\": \"Venta no encontrada.\"}");
-    //         }
-    //     } catch (SQLException e) {
-    //         e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
-    //         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
-    //     } catch (NumberFormatException e) {
-    //         e.printStackTrace(); // Imprimir el error en caso de problemas con el formato del número
-    //         response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // Configurar el código de estado de la respuesta HTTP como 400 (BAD REQUEST)
-    //         response.getWriter().write("{\"message\": \"ID de venta inválido.\"}");
-    //     }
-    // }
+            if (rowsDeleted > 0) {
+                response.setStatus(HttpServletResponse.SC_OK); // Configurar el código de estado de la respuesta HTTP como 200 (OK)
+                response.getWriter().write("{\"message\": \"Venta eliminada exitosamente.\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND); // Configurar el código de estado de la respuesta HTTP como 404 (NOT FOUND)
+                response.getWriter().write("{\"message\": \"Venta no encontrada.\"}");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+        } catch (NumberFormatException e) {
+            e.printStackTrace(); // Imprimir el error en caso de problemas con el formato del número
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // Configurar el código de estado de la respuesta HTTP como 400 (BAD REQUEST)
+            response.getWriter().write("{\"message\": \"ID de venta inválido.\"}");
+        }
+    }
         
 }
