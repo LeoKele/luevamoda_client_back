@@ -23,11 +23,13 @@ import java.util.List;
 public class ControladorVenta extends ControladorBase {
 
     private ProductoService productoService;
+    private ClienteService clienteService;
 
     @Override
     public void init() throws ServletException {
         super.init();
         this.productoService = new ProductoService();
+        this.clienteService = new ClienteService();
     }
 
     @Override
@@ -106,6 +108,13 @@ public class ControladorVenta extends ControladorBase {
             return;
         }
     
+        // Verificar si el cliente existe antes de realizar la operación
+        if (!clienteService.clienteExiste(venta.getIdCliente())) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("{\"message\": \"El ID de cliente no existe.\"}");
+            return;
+        }
+    
         String query = "INSERT INTO ventas (id_cliente, id_producto, fecha_venta, cantidad, precio_unitario) VALUES (?, ?, ?, ?, ?)";
     
         try (Connection conn = obtenerConexion();
@@ -140,25 +149,29 @@ public class ControladorVenta extends ControladorBase {
         }
     }
     
-    
-
-
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         configurarCORS(response);
-        String query = "UPDATE ventas SET id_producto = ?, id_cliente = ? ,fecha_venta = ?, cantidad = ?, precio_unitario = ? WHERE id_venta = ?";
-        try(Connection conn = obtenerConexion();
-        PreparedStatement statement = conn.prepareStatement(query)) {
-
+        String query = "UPDATE ventas SET id_producto = ?, id_cliente = ?, fecha_venta = ?, cantidad = ?, precio_unitario = ? WHERE id_venta = ?";
+        try (Connection conn = obtenerConexion();
+             PreparedStatement statement = conn.prepareStatement(query)) {
+    
             ObjectMapper mapper = JsonConfig.createObjectMapper();  // Crear un objeto ObjectMapper para convertir JSON a objetos Java
-            Venta venta = mapper.readValue(request.getInputStream(), Venta.class);  // Convertir el JSON de la solicitud a un objeto Pelicula
-
+            Venta venta = mapper.readValue(request.getInputStream(), Venta.class);  // Convertir el JSON de la solicitud a un objeto Venta
+    
             // Verificar si el producto existe antes de realizar la operación
             if (!productoService.productoExiste(venta.getIdProducto())) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().write("{\"message\": \"El ID de venta no existe.\"}");
+                response.getWriter().write("{\"message\": \"El ID de producto no existe.\"}");
                 return;
             }
-
+    
+            // Verificar si el cliente existe antes de realizar la operación
+            if (!clienteService.clienteExiste(venta.getIdCliente())) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("{\"message\": \"El ID de cliente no existe.\"}");
+                return;
+            }
+    
             // Establecer los parámetros de la consulta de actualización
             statement.setLong(1, venta.getIdProducto());
             statement.setLong(2, venta.getIdCliente());
@@ -166,10 +179,10 @@ public class ControladorVenta extends ControladorBase {
             statement.setLong(4, venta.getCantidad());
             statement.setDouble(5, venta.getPrecioUnitario());
             statement.setLong(6, venta.getId());
-
+    
             // Ejecutar la consulta de actualización
             int rowsUpdated = statement.executeUpdate();
-
+    
             if (rowsUpdated > 0) {
                 response.setStatus(HttpServletResponse.SC_OK); // Configurar el código de estado de la respuesta HTTP como 200 (OK)
                 response.getWriter().write("{\"message\": \"Venta actualizada exitosamente.\"}");
@@ -178,13 +191,29 @@ public class ControladorVenta extends ControladorBase {
                 response.getWriter().write("{\"message\": \"Venta no encontrada.\"}");
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+            // Manejar errores específicos de la base de datos
+            if (e.getSQLState().equals("23000") && e.getMessage().contains("foreign key constraint")) {
+                if (e.getMessage().contains("id_cliente")) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    response.getWriter().write("{\"message\": \"El ID de cliente no existe.\"}");
+                } else if (e.getMessage().contains("id_producto")) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    response.getWriter().write("{\"message\": \"El ID de producto no existe.\"}");
+                } else {
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    response.getWriter().write("{\"message\": \"Error en la base de datos.\"}");
+                }
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write("{\"message\": \"Error en la base de datos.\"}");
+            }
         } catch (IOException e) {
             e.printStackTrace(); // Imprimir el error en caso de problemas de entrada/salida
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}"); // Devolver el mensaje de error de entrada/salida
         }
     }
+    
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Configurar cabeceras CORS
         configurarCORS(response);

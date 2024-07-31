@@ -15,26 +15,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 @WebServlet("/clientes")
-public class ControladorCliente extends ControladorBase{
+public class ControladorCliente extends ControladorBase {
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         configurarCORS(response);
 
         String query;
         String idParam = request.getParameter("id");
 
-        if (idParam != null){
+        if (idParam != null) {
             query = "SELECT * FROM clientes WHERE id_cliente = ?";
         } else {
             query = "SELECT * FROM clientes";
         }
 
-        //Try-with-resources para cerrar correctamente la conexion
+        // Try-with-resources para cerrar correctamente la conexion
         try (Connection conn = obtenerConexion();
-             PreparedStatement statement = conn.prepareStatement(query)) {
+                PreparedStatement statement = conn.prepareStatement(query)) {
 
-            if (idParam != null){
+            if (idParam != null) {
                 statement.setLong(1, Long.parseLong(idParam));
             }
 
@@ -46,8 +47,7 @@ public class ControladorCliente extends ControladorBase{
                         resultSet.getLong("id_cliente"),
                         resultSet.getString("nombre"),
                         resultSet.getString("telefono"),
-                        resultSet.getString("mail")
-                );
+                        resultSet.getString("mail"));
                 clientes.add(cliente);
             }
 
@@ -63,14 +63,15 @@ public class ControladorCliente extends ControladorBase{
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         configurarCORS(response);
         String query = "INSERT INTO clientes (nombre, telefono, mail) VALUES (?, ?, ?)";
 
         try (Connection conn = obtenerConexion();
-             PreparedStatement statement = conn.prepareStatement(
-                query, 
-                Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement statement = conn.prepareStatement(
+                        query,
+                        Statement.RETURN_GENERATED_KEYS)) {
 
             ObjectMapper mapper = new ObjectMapper();
             Cliente cliente = mapper.readValue(request.getInputStream(), Cliente.class);
@@ -93,83 +94,109 @@ public class ControladorCliente extends ControladorBase{
             response.setStatus(HttpServletResponse.SC_CREATED);
 
         } catch (SQLException e) {
-            manejarError(response, e);
+            e.printStackTrace();
+            if (e.getSQLState().startsWith("23")) { // Código de estado SQL para violaciones de restricción
+                response.setStatus(HttpServletResponse.SC_CONFLICT); // 409 Conflict
+                response.getWriter().write("{\"message\": \"Error: El nombre del cliente ya existe.\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+                response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
+            }
         } catch (IOException e) {
-            manejarError(response, e);
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
         }
     }
-    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+    protected void doPut(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         configurarCORS(response);
         String query = "UPDATE clientes SET nombre = ?, telefono = ?, mail = ? WHERE id_cliente = ?";
-        try(Connection conn = obtenerConexion();
-        PreparedStatement statement = conn.prepareStatement(query)) {
+        try (Connection conn = obtenerConexion();
+                PreparedStatement statement = conn.prepareStatement(query)) {
 
-            ObjectMapper mapper = new ObjectMapper();  // Crear un objeto ObjectMapper para convertir JSON a objetos Java
-            Cliente cliente = mapper.readValue(request.getInputStream(), Cliente.class);  // Convertir el JSON de la solicitud a un objeto Pelicula
+            ObjectMapper mapper = new ObjectMapper();
+            Cliente cliente = mapper.readValue(request.getInputStream(), Cliente.class);
 
-
-            // Establecer los parámetros de la consulta de actualización
             statement.setString(1, cliente.getNombre());
             statement.setString(2, cliente.getTelefono());
             statement.setString(3, cliente.getMail());
             statement.setLong(4, cliente.getId());
 
-            // Ejecutar la consulta de actualización
             int rowsUpdated = statement.executeUpdate();
 
             if (rowsUpdated > 0) {
-                response.setStatus(HttpServletResponse.SC_OK); // Configurar el código de estado de la respuesta HTTP como 200 (OK)
+                response.setStatus(HttpServletResponse.SC_OK);
                 response.getWriter().write("{\"message\": \"Cliente actualizado exitosamente.\"}");
             } else {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND); // Configurar el código de estado de la respuesta HTTP como 404 (NOT FOUND)
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 response.getWriter().write("{\"message\": \"Cliente no encontrado.\"}");
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+            e.printStackTrace();
+            if (e.getSQLState().startsWith("23")) { // Código de estado SQL para violaciones de restricción
+                response.setStatus(HttpServletResponse.SC_CONFLICT); // 409 Conflict
+                response.getWriter().write("{\"message\": \"Error: El nombre del cliente ya existe.\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+                response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
+            }
         } catch (IOException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas de entrada/salida
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
         }
     }
 
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Configurar cabeceras CORS
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         configurarCORS(response);
         String query = "DELETE FROM clientes WHERE id_cliente = ?";
 
         try (Connection conn = obtenerConexion();
-        PreparedStatement statement = conn.prepareStatement(query)) {
+                PreparedStatement statement = conn.prepareStatement(query)) {
 
-            String idParam = request.getParameter("id");  // Obtener el parámetro de consulta 'id'
+            String idParam = request.getParameter("id");
             if (idParam == null) {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // Configurar el código de estado de la respuesta HTTP como 400 (BAD REQUEST)
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400 Bad Request
                 response.getWriter().write("{\"message\": \"ID de cliente no proporcionado.\"}");
                 return;
             }
 
-            int idCategoria = Integer.parseInt(idParam);
+            int idCliente = Integer.parseInt(idParam);
 
-            // Establecer los parámetros de la consulta de eliminación
-            statement.setInt(1, idCategoria);
+            statement.setInt(1, idCliente);
 
-            // Ejecutar la consulta de eliminación
             int rowsDeleted = statement.executeUpdate();
 
             if (rowsDeleted > 0) {
-                response.setStatus(HttpServletResponse.SC_OK); // Configurar el código de estado de la respuesta HTTP como 200 (OK)
+                response.setStatus(HttpServletResponse.SC_OK);
                 response.getWriter().write("{\"message\": \"Cliente eliminado exitosamente.\"}");
             } else {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND); // Configurar el código de estado de la respuesta HTTP como 404 (NOT FOUND)
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 response.getWriter().write("{\"message\": \"Cliente no encontrado.\"}");
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+            e.printStackTrace();
+            if (e.getSQLState().startsWith("23000")) { // Código de estado SQL para violaciones de restricción de clave
+                                                       // externa
+                response.setStatus(HttpServletResponse.SC_CONFLICT); // 409 Conflict
+                response.getWriter().write(
+                        "{\"message\": \"Error: El cliente está relacionado con otros registros y no puede ser eliminado.\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+                response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
+            }
         } catch (NumberFormatException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas con el formato del número
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // Configurar el código de estado de la respuesta HTTP como 400 (BAD REQUEST)
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // 400 Bad Request
             response.getWriter().write("{\"message\": \"ID de cliente inválido.\"}");
+        } catch (IOException e) {
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
         }
     }
+
 }

@@ -178,12 +178,20 @@ public class ControladorCategoria extends ControladorBase{
                 response.getWriter().write("{\"message\": \"Categoria no encontrada.\"}");
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
-        } catch (NumberFormatException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas con el formato del número
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // Configurar el código de estado de la respuesta HTTP como 400 (BAD REQUEST)
-            response.getWriter().write("{\"message\": \"ID de categoria inválido.\"}");
+            e.printStackTrace();
+            int errorCode = e.getErrorCode();
+            
+            if (errorCode == 1451) { // Error de clave foránea específica de MySQL para registros relacionados
+                response.setStatus(HttpServletResponse.SC_CONFLICT); // 409 Conflict
+                response.getWriter().write("{\"message\": \"Error: No se puede eliminar la categoria porque está relacionada con otros registros.\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+                response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}"); // Devolver el mensaje de error de la base de datos
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}"); // Devolver el mensaje de error de entrada/salida
         }
     }
 }

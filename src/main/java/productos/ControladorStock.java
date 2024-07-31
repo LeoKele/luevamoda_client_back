@@ -76,34 +76,30 @@ public class ControladorStock extends ControladorBase{
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         configurarCORS(response);
-
+    
         ObjectMapper mapper = new ObjectMapper();
         Stock stock = mapper.readValue(request.getInputStream(), Stock.class);
-
-        //* */ Verificar si el producto existe antes de insertar en stock
+    
+        // Verificar si el producto existe antes de insertar en stock
         if (!productoService.productoExiste(stock.getIdProducto())) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write("{\"message\": \"El ID de producto no existe.\"}");
             return;
         }
-        String query = "INSERT INTO stock (id_producto, cantidad) VALUES (?, ?)";
         
+        String query = "INSERT INTO stock (id_producto, cantidad) VALUES (?, ?)";
+    
         try (Connection conn = obtenerConexion();
              PreparedStatement statement = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-            
-
-            
+    
             statement.setLong(1, stock.getIdProducto());
             statement.setLong(2, stock.getCantidad());
             statement.executeUpdate();
-            
+    
             // Obtener el id generado automáticamente
             try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     long idStock = generatedKeys.getLong(1);
-                    
-                
-                    
                     // Crear una respuesta JSON simple con solo el ID generado
                     String jsonResponse = String.format("{\"id\": %d}", idStock);
                     response.setContentType("application/json");
@@ -112,57 +108,71 @@ public class ControladorStock extends ControladorBase{
                     throw new SQLException("Creating stock failed, no ID obtained.");
                 }
             }
-            
+    
             response.setStatus(HttpServletResponse.SC_CREATED);
-            
+    
         } catch (SQLException e) {
-            manejarError(response, e);
+            int errorCode = e.getErrorCode();
+            if (errorCode == 1062) { // Error de clave única específica de MySQL
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("{\"message\": \"Ya existe un registro con este ID de producto.\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
+            }
         } catch (IOException e) {
-            manejarError(response, e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"message\": \"Error de entrada/salida: " + e.getMessage() + "\"}");
         }
     }
     
+    
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         configurarCORS(response);
-        String query = "UPDATE stock SET id_producto = ? ,cantidad = ? WHERE id_stock = ?";
+        String query = "UPDATE stock SET id_producto = ?, cantidad = ? WHERE id_stock = ?";
+        
         try (Connection conn = obtenerConexion();
-            PreparedStatement statement = conn.prepareStatement(query)) {
+             PreparedStatement statement = conn.prepareStatement(query)) {
+    
             ObjectMapper mapper = new ObjectMapper();
             Stock stock = mapper.readValue(request.getInputStream(), Stock.class);
-
-            //* */ Verificar si el producto existe antes de insertar en stock
+    
+            // Verificar si el producto existe antes de actualizar el stock
             if (!productoService.productoExiste(stock.getIdProducto())) {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.getWriter().write("{\"message\": \"El ID de producto no existe.\"}");
                 return;
             }
     
-            // Establecer los parámetros de la consulta de actualización
             statement.setLong(1, stock.getIdProducto());
             statement.setLong(2, stock.getCantidad());
             statement.setLong(3, stock.getId());
-
-            // Ejecutar la consulta de actualización
+    
             int rowsUpdated = statement.executeUpdate();
-
+    
             if (rowsUpdated > 0) {
-                response.setStatus(HttpServletResponse.SC_OK); // Configurar el código de estado de la respuesta HTTP como 200 (OK)
+                response.setStatus(HttpServletResponse.SC_OK);
                 response.getWriter().write("{\"message\": \"Cantidad/ID Producto actualizado exitosamente.\"}");
             } else {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND); // Configurar el código de estado de la respuesta HTTP como 404 (NOT FOUND)
-                response.getWriter().write("{\"message\": \"Producto no encontrado.\"}");
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                response.getWriter().write("{\"message\": \"Stock no encontrado.\"}");
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
-            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}"); // Devolver el mensaje de error de la base de datos
+            int errorCode = e.getErrorCode();
+            if (errorCode == 1062) { // Error de clave única específica de MySQL
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("{\"message\": \"Ya existe un registro con este ID de producto.\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
+            }
         } catch (IOException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas de entrada/salida
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
-            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}"); // Devolver el mensaje de error de entrada/salida
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"message\": \"Error de entrada/salida: " + e.getMessage() + "\"}");
         }
     }
     
+      
     
     
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

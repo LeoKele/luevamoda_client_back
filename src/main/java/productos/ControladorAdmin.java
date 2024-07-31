@@ -87,15 +87,14 @@ public class ControladorAdmin extends ControladorBase {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         configurarCORS(response);
-
+    
+        String query = "INSERT INTO productos (cliente, nombre_producto, id_categoria, medida_busto, medida_cintura, medida_cadera, precio_molde_base, precio_molde_digital, precio_molde_cartulina, cantidad_talles, listado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = obtenerConexion();
-             PreparedStatement statement = conn.prepareStatement(
-                "INSERT INTO productos (cliente, nombre_producto, id_categoria, medida_busto, medida_cintura, medida_cadera, precio_molde_base,  precio_molde_digital, precio_molde_cartulina,cantidad_talles, listado) VALUES (?, ?, ?, ?, ?, ?,?,?,?,?,?)", 
-                Statement.RETURN_GENERATED_KEYS)) {
-
+             PreparedStatement statement = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+    
             ObjectMapper mapper = new ObjectMapper();
             ProductoAdmin producto = mapper.readValue(request.getInputStream(), ProductoAdmin.class);
-
+    
             statement.setString(1, producto.getCliente());
             statement.setString(2, producto.getNombre());
             statement.setLong(3, producto.getIdCategoria());
@@ -108,40 +107,46 @@ public class ControladorAdmin extends ControladorBase {
             statement.setLong(10, producto.getCantidadTalles());
             statement.setInt(11, producto.getListado());
             statement.executeUpdate();
-
+    
             try (ResultSet rs = statement.getGeneratedKeys()) {
                 if (rs.next()) {
                     Long idProducto = rs.getLong(1);
-
+    
                     response.setContentType("application/json");
                     String json = mapper.writeValueAsString(idProducto);
                     response.getWriter().write(json);
                 }
             }
-
+    
             response.setStatus(HttpServletResponse.SC_CREATED);
-
+    
         } catch (SQLException e) {
             String mensajeError = e.getMessage();
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
+            int errorCode = e.getErrorCode();
+    
+            if (errorCode == 1452) { // Error de clave foránea específica de MySQL
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("{\"message\": \"Error: ID de categoría inexistente.\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
+            }
         } catch (IOException e) {
             String mensajeError = "Error de entrada/salida: " + e.getMessage();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
         }
     }
-
+    
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         configurarCORS(response);
-        String query = "UPDATE productos SET cliente = ?, nombre_producto = ?, id_categoria = ?, medida_busto = ?,medida_cintura = ?,medida_cadera = ?, precio_molde_base = ?, precio_molde_digital = ?, precio_molde_cartulina = ?, cantidad_talles = ?, listado = ? WHERE id_producto = ?";
-        try(Connection conn = obtenerConexion();
-        PreparedStatement statement = conn.prepareStatement(query)) {
-
-            ObjectMapper mapper = new ObjectMapper();  // Crear un objeto ObjectMapper para convertir JSON a objetos Java
-            ProductoAdmin producto = mapper.readValue(request.getInputStream(), ProductoAdmin.class);  // Convertir el JSON de la solicitud a un objeto Pelicula
-
-
+        String query = "UPDATE productos SET cliente = ?, nombre_producto = ?, id_categoria = ?, medida_busto = ?, medida_cintura = ?, medida_cadera = ?, precio_molde_base = ?, precio_molde_digital = ?, precio_molde_cartulina = ?, cantidad_talles = ?, listado = ? WHERE id_producto = ?";
+        try (Connection conn = obtenerConexion();
+             PreparedStatement statement = conn.prepareStatement(query)) {
+    
+            ObjectMapper mapper = new ObjectMapper();
+            ProductoAdmin producto = mapper.readValue(request.getInputStream(), ProductoAdmin.class);
+    
             // Establecer los parámetros de la consulta de actualización
             statement.setString(1, producto.getCliente());
             statement.setString(2, producto.getNombre());
@@ -155,69 +160,85 @@ public class ControladorAdmin extends ControladorBase {
             statement.setLong(10, producto.getCantidadTalles());
             statement.setInt(11, producto.getListado());
             statement.setLong(12, producto.getId());
-
+    
             // Ejecutar la consulta de actualización
             int rowsUpdated = statement.executeUpdate();
-
+    
             if (rowsUpdated > 0) {
-                response.setStatus(HttpServletResponse.SC_OK); // Configurar el código de estado de la respuesta HTTP como 200 (OK)
+                response.setStatus(HttpServletResponse.SC_OK);
                 response.getWriter().write("{\"message\": \"Producto actualizado exitosamente.\"}");
             } else {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND); // Configurar el código de estado de la respuesta HTTP como 404 (NOT FOUND)
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 response.getWriter().write("{\"message\": \"Producto no encontrado.\"}");
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
-        }catch (IOException e) {
-            String mensajeError = "Error de entrada/salida: " + e.getMessage();
+            e.printStackTrace();
+            int errorCode = e.getErrorCode();
+    
+            if (errorCode == 1452) { // Error de clave foránea específica de MySQL
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("{\"message\": \"Error: ID de categoría inexistente.\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
+            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
         }
     }
+    
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Configurar cabeceras CORS
         configurarCORS(response);
         String query = "DELETE FROM productos WHERE id_producto = ?";
-
+    
         try (Connection conn = obtenerConexion();
-        PreparedStatement statement = conn.prepareStatement(query)) {
-
-            String idParam = request.getParameter("id");  // Obtener el parámetro de consulta 'id'
+             PreparedStatement statement = conn.prepareStatement(query)) {
+    
+            String idParam = request.getParameter("id");
             if (idParam == null) {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // Configurar el código de estado de la respuesta HTTP como 400 (BAD REQUEST)
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.getWriter().write("{\"message\": \"ID de producto no proporcionado.\"}");
                 return;
             }
-
+    
             int idProducto = Integer.parseInt(idParam);
-
+    
             // Establecer los parámetros de la consulta de eliminación
             statement.setInt(1, idProducto);
-
+    
             // Ejecutar la consulta de eliminación
             int rowsDeleted = statement.executeUpdate();
-
+    
             if (rowsDeleted > 0) {
-                response.setStatus(HttpServletResponse.SC_OK); // Configurar el código de estado de la respuesta HTTP como 200 (OK)
+                response.setStatus(HttpServletResponse.SC_OK);
                 response.getWriter().write("{\"message\": \"Producto eliminado exitosamente.\"}");
             } else {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND); // Configurar el código de estado de la respuesta HTTP como 404 (NOT FOUND)
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 response.getWriter().write("{\"message\": \"Producto no encontrado.\"}");
             }
         } catch (SQLException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
+            e.printStackTrace();
+            int errorCode = e.getErrorCode();
+    
+            if (errorCode == 1451) { // Error de clave foránea específica de MySQL
+                response.setStatus(HttpServletResponse.SC_CONFLICT);
+                response.getWriter().write("{\"message\": \"Error: El producto está en uso y no puede ser eliminado.\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}");
+            }
         } catch (NumberFormatException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas con el formato del número
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // Configurar el código de estado de la respuesta HTTP como 400 (BAD REQUEST)
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write("{\"message\": \"ID de producto inválido.\"}");
-        }catch (IOException e) {
+        } catch (IOException e) {
             String mensajeError = "Error de entrada/salida: " + e.getMessage();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
         }
-        
     }
+    
         
 }

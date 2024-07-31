@@ -71,95 +71,107 @@ public class ControladorImagen extends ControladorBase{
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        configurarCORS(response);
+protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    configurarCORS(response);
+
+    ObjectMapper mapper = new ObjectMapper();
+    Imagen imagen = mapper.readValue(request.getInputStream(), Imagen.class);
+
+    //* */ Verificar si el producto existe antes de insertar en stock
+    if (!productoService.productoExiste(imagen.getIdProducto())) {
+        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        response.getWriter().write("{\"message\": \"El ID de producto no existe.\"}");
+        return;
+    }
+
+    String query = "INSERT INTO imagenes_productos (id_producto, img_path) VALUES (?, ?)";
+    try (Connection conn = obtenerConexion();
+         PreparedStatement statement = conn.prepareStatement(
+            query, 
+            Statement.RETURN_GENERATED_KEYS)) {
+
+        statement.setLong(1, imagen.getIdProducto());
+        statement.setString(2, imagen.getImgPath());
+        statement.executeUpdate();
+
+        // Configuramos la respuesta como JSON
+        try (ResultSet rs = statement.getGeneratedKeys()) {
+            if (rs.next()) {
+                Long idImg = rs.getLong(1);
+
+                response.setContentType("application/json");
+                String json = mapper.writeValueAsString(idImg);
+                response.getWriter().write(json);
+            } else {
+                throw new SQLException("Error al crear imagen, ningún ID fue obtenido.");
+            }
+        }
+        response.setStatus(HttpServletResponse.SC_CREATED);
+
+    } catch (SQLException e) {
+        String mensajeError = e.getMessage();
+        if (e.getSQLState().startsWith("23")) { // Código de estado SQL para violaciones de restricción (incluyendo entrada duplicada)
+            response.setStatus(HttpServletResponse.SC_CONFLICT); // 409 Conflict
+            response.getWriter().write("{\"message\": \"Error: La ruta de la imagen ya está en uso.\"}");
+        } else {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+            response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
+        }
+    } catch (IOException e) {
+        String mensajeError = "Error de entrada/salida: " + e.getMessage();
+        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+        response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
+    }
+}
+
+protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    configurarCORS(response);
+    String query = "UPDATE imagenes_productos SET id_producto = ?, img_path = ? WHERE id = ?";
+
+    try (Connection conn = obtenerConexion();
+         PreparedStatement statement = conn.prepareStatement(query)) {
 
         ObjectMapper mapper = new ObjectMapper();
         Imagen imagen = mapper.readValue(request.getInputStream(), Imagen.class);
-
-        //* */ Verificar si el producto existe antes de insertar en stock
+        
+        // Verificar si el nuevo idProducto existe
         if (!productoService.productoExiste(imagen.getIdProducto())) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write("{\"message\": \"El ID de producto no existe.\"}");
             return;
         }
+        
+        // Establecer los parámetros de la consulta de actualización
+        statement.setLong(1, imagen.getIdProducto());
+        statement.setString(2, imagen.getImgPath());
+        statement.setLong(3, imagen.getId());
 
-        String query = "INSERT INTO imagenes_productos (id_producto, img_path) VALUES (?,?)";
-        try (Connection conn = obtenerConexion();
-             PreparedStatement statement = conn.prepareStatement(
-                query, 
-                Statement.RETURN_GENERATED_KEYS)) {
+        // Ejecutar la consulta de actualización
+        int rowsUpdated = statement.executeUpdate();
 
-
-            
-            statement.setLong(1, imagen.getIdProducto());
-            statement.setString(2, imagen.getImgPath());
-            statement.executeUpdate();
-
-            // Configuramos la respuesta como JSON
-            try (ResultSet rs = statement.getGeneratedKeys()) {
-                if (rs.next()) {
-                    Long idImg = rs.getLong(1);
-
-                    ImagenResponse imagenResponse = new ImagenResponse(idImg, imagen.getIdProducto(), imagen.getImgPath());
-
-                    response.setContentType("application/json");
-                    String json = mapper.writeValueAsString(imagenResponse);
-                    response.getWriter().write(json);
-                } else {
-                    throw new SQLException("Error al crear imagen, ningún ID fue obtenido.");
-                }
-            }
-            response.setStatus(HttpServletResponse.SC_CREATED);
-
-        } catch (SQLException e) {
-            manejarError(response, e);
-        } catch (IOException e) {
-            manejarError(response, e);
+        if (rowsUpdated > 0) {
+            response.setStatus(HttpServletResponse.SC_OK); // 200 OK
+            response.getWriter().write("{\"message\": \"Imagen actualizada exitosamente.\"}");
+        } else {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND); // 404 Not Found
+            response.getWriter().write("{\"message\": \"Imagen no encontrada.\"}");
         }
-    }
-    protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        configurarCORS(response);
-        String query = "UPDATE imagenes_productos SET id_producto = ?, img_path = ? WHERE id = ?";
-
-        try (Connection conn = obtenerConexion();
-            PreparedStatement statement = conn.prepareStatement(query)) {
-
-            ObjectMapper mapper = new ObjectMapper();
-            Imagen imagen = mapper.readValue(request.getInputStream(), Imagen.class);
-            
-            // Verificar si el nuevo idProducto existe
-            if (!productoService.productoExiste(imagen.getIdProducto())) {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().write("{\"message\": \"El ID de producto no existe.\"}");
-                return;
-            }
-            
-            // Establecer los parámetros de la consulta de actualización
-            statement.setLong(1, imagen.getIdProducto());
-            statement.setString(2, imagen.getImgPath());
-            statement.setLong(3, imagen.getId());
-
-            // Ejecutar la consulta de actualización
-            int rowsUpdated = statement.executeUpdate();
-
-            if (rowsUpdated > 0) {
-                response.setStatus(HttpServletResponse.SC_OK); // Configurar el código de estado de la respuesta HTTP como 200 (OK)
-                response.getWriter().write("{\"message\": \"Imagen actualizada exitosamente.\"}");
-            } else {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND); // Configurar el código de estado de la respuesta HTTP como 404 (NOT FOUND)
-                response.getWriter().write("{\"message\": \"Imagen no encontrada.\"}");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas con la base de datos
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
-            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}"); // Devolver el mensaje de error de la base de datos
-        } catch (IOException e) {
-            e.printStackTrace(); // Imprimir el error en caso de problemas de entrada/salida
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // Configurar el código de estado de la respuesta HTTP como 500 (INTERNAL SERVER ERROR)
-            response.getWriter().write("{\"message\": \"" + e.getMessage() + "\"}"); // Devolver el mensaje de error de entrada/salida
+    } catch (SQLException e) {
+        String mensajeError = e.getMessage();
+        if (e.getSQLState().startsWith("23")) { // Código de estado SQL para violaciones de restricción (incluyendo entrada duplicada)
+            response.setStatus(HttpServletResponse.SC_CONFLICT); // 409 Conflict
+            response.getWriter().write("{\"message\": \"Error: La ruta de la imagen ya está en uso.\"}");
+        } else {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+            response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
         }
+    } catch (IOException e) {
+        String mensajeError = "Error de entrada/salida: " + e.getMessage();
+        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR); // 500 Internal Server Error
+        response.getWriter().write("{\"message\": \"" + mensajeError + "\"}");
     }
+}
+
     
     
     
