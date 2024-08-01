@@ -6,9 +6,6 @@ public class ProductoBase {
     private String cliente;
     private String nombre;
     private Long idCategoria;
-    private Long medidaBusto;
-    private Long medidaCintura;
-    private Long medidaCadera;
     private Double precioMoldeBase;
     private Double precioMoldeDigital;
     private Double precioMoldeCartulina;
@@ -16,14 +13,11 @@ public class ProductoBase {
 
 
 
-    public ProductoBase(Long id, String cliente, String nombre, Long idCategoria, Long medidaBusto, Long medidaCintura, Long medidaCadera, Double precioMoldeBase, Double precioMoldeDigital, Double precioMoldeCartulina, Long cantidadTalles){
+    public ProductoBase(Long id, String cliente, String nombre, Long idCategoria, Double precioMoldeBase, Double precioMoldeDigital, Double precioMoldeCartulina, Long cantidadTalles){
         this.id = id;
         this.cliente = cliente;
         this.nombre = nombre;
         this.idCategoria = idCategoria;
-        this.medidaBusto = medidaBusto;
-        this.medidaCintura = medidaCintura;
-        this.medidaCadera = medidaCadera;
         this.precioMoldeBase = precioMoldeBase;
         this.precioMoldeDigital = precioMoldeDigital;
         this.precioMoldeCartulina = precioMoldeCartulina;
@@ -44,14 +38,14 @@ public class ProductoBase {
     }
 
     //constructor para el JSON detalle
-    public ProductoBase(Long id, String nombre,Long medidaBusto, Long medidaCintura, Long medidaCadera, Long cantidadTalles ){
-        this.id = id;
-        this.nombre = nombre;
-        this.medidaBusto = medidaBusto;
-        this.medidaCintura = medidaCintura;
-        this.medidaCadera = medidaCadera;
-        this.cantidadTalles = cantidadTalles;
-    }
+    // public ProductoBase(Long id, String nombre,Long medidaBusto, Long medidaCintura, Long medidaCadera, Long cantidadTalles ){
+    //     this.id = id;
+    //     this.nombre = nombre;
+    //     this.medidaBusto = medidaBusto;
+    //     this.medidaCintura = medidaCintura;
+    //     this.medidaCadera = medidaCadera;
+    //     this.cantidadTalles = cantidadTalles;
+    // }
 
     //Constructor vacio necesario para deserializacion de JSON
     public ProductoBase() {}
@@ -89,26 +83,26 @@ public class ProductoBase {
         this.idCategoria = idCategoria;
     }
 
-    public Long getMedidaBusto() {
-        return medidaBusto;
-    }
-    public void setMedidaBusto(Long medidaBusto) {
-        this.medidaBusto = medidaBusto;
-    }
+    // public Long getMedidaBusto() {
+    //     return medidaBusto;
+    // }
+    // public void setMedidaBusto(Long medidaBusto) {
+    //     this.medidaBusto = medidaBusto;
+    // }
 
-    public Long getMedidaCintura() {
-        return medidaCintura;
-    }
-    public void setMedidaCintura(Long medidaCintura) {
-        this.medidaCintura = medidaCintura;
-    }
+    // public Long getMedidaCintura() {
+    //     return medidaCintura;
+    // }
+    // public void setMedidaCintura(Long medidaCintura) {
+    //     this.medidaCintura = medidaCintura;
+    // }
 
-    public Long getMedidaCadera() {
-        return medidaCadera;
-    }
-    public void setMedidaCadera(Long medidaCadera) {
-        this.medidaCadera = medidaCadera;
-    }
+    // public Long getMedidaCadera() {
+    //     return medidaCadera;
+    // }
+    // public void setMedidaCadera(Long medidaCadera) {
+    //     this.medidaCadera = medidaCadera;
+    // }
 
     public Double getPrecioMoldeBase() {
         return precioMoldeBase;

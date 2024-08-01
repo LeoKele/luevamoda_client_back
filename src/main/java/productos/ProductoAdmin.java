@@ -12,8 +12,8 @@ public class ProductoAdmin extends ProductoBase{
     //Constructor vacio necesario para deserializacion de JSON
     public ProductoAdmin() {}
 
-    public ProductoAdmin(Long id, String cliente, String nombre, Long idCategoria, Long medidaBusto, Long medidaCintura, Long medidaCadera, Double precioMoldeBase, Double precioMoldeDigital, Double precioMoldeCartulina, Long cantidadTalles, int listado) {
-        super(id, cliente,nombre,idCategoria,medidaBusto,medidaCintura,medidaCadera,precioMoldeBase,precioMoldeDigital,precioMoldeCartulina,cantidadTalles);
+    public ProductoAdmin(Long id, String cliente, String nombre, Long idCategoria, Double precioMoldeBase, Double precioMoldeDigital, Double precioMoldeCartulina, Long cantidadTalles, int listado) {
+        super(id, cliente,nombre,idCategoria,precioMoldeBase,precioMoldeDigital,precioMoldeCartulina,cantidadTalles);
         this.listado = listado;
     }
 

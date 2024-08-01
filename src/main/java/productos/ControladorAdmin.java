@@ -29,12 +29,12 @@ public class ControladorAdmin extends ControladorBase {
         // Construir la consulta SQL de manera dinámica
         if (idParam != null) {
             // Si se proporciona idParam, se incluye en la consulta
-            query = "SELECT * FROM productos WHERE id_producto = ? AND listado = ?";
+            query = "SELECT p.*, COUNT(tp.id) AS cantidad_talles FROM productos p LEFT JOIN talles_productos tp ON p.id_producto = tp.id_producto WHERE p.id_producto = ? AND p.listado = ? GROUP BY p.id_producto ";
         } else if (listadoParam != null) {
             // Si no se proporciona idParam, se usa el valor de listadoParam si está presente
-            query = "SELECT * FROM productos WHERE listado = ?";
+            query = "SELECT p.*, COUNT(tp.id) AS cantidad_talles FROM productos p LEFT JOIN talles_productos tp ON p.id_producto = tp.id_producto WHERE listado = ? GROUP BY p.id_producto ";
         } else {
-            query = "SELECT * FROM productos"; // Consulta por defecto si no se proporciona listadoParam
+            query = "SELECT p.*, COUNT(tp.id) AS cantidad_talles FROM productos p LEFT JOIN talles_productos tp ON p.id_producto = tp.id_producto GROUP BY p.id_producto"; // Consulta por defecto si no se proporciona listadoParam
         }
 
         //Try-with-resources para cerrar correctamente la conexion
@@ -60,9 +60,6 @@ public class ControladorAdmin extends ControladorBase {
                         resultSet.getString("cliente"),
                         resultSet.getString("nombre_producto"),
                         resultSet.getLong("id_categoria"),
-                        resultSet.getLong("medida_busto"),
-                        resultSet.getLong("medida_cintura"),
-                        resultSet.getLong("medida_cadera"),
                         resultSet.getDouble("precio_molde_base"),
                         resultSet.getDouble("precio_molde_digital"),
                         resultSet.getDouble("precio_molde_cartulina"),
@@ -88,7 +85,7 @@ public class ControladorAdmin extends ControladorBase {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         configurarCORS(response);
     
-        String query = "INSERT INTO productos (cliente, nombre_producto, id_categoria, medida_busto, medida_cintura, medida_cadera, precio_molde_base, precio_molde_digital, precio_molde_cartulina, cantidad_talles, listado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO productos (cliente, nombre_producto, id_categoria, precio_molde_base, precio_molde_digital, precio_molde_cartulina, listado) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = obtenerConexion();
              PreparedStatement statement = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
     
@@ -98,14 +95,10 @@ public class ControladorAdmin extends ControladorBase {
             statement.setString(1, producto.getCliente());
             statement.setString(2, producto.getNombre());
             statement.setLong(3, producto.getIdCategoria());
-            statement.setLong(4, producto.getMedidaBusto());
-            statement.setLong(5, producto.getMedidaCintura());
-            statement.setLong(6, producto.getMedidaCadera());
-            statement.setDouble(7, producto.getPrecioMoldeBase());
-            statement.setDouble(8, producto.getPrecioMoldeDigital());
-            statement.setDouble(9, producto.getPrecioMoldeCartulina());
-            statement.setLong(10, producto.getCantidadTalles());
-            statement.setInt(11, producto.getListado());
+            statement.setDouble(4, producto.getPrecioMoldeBase());
+            statement.setDouble(5, producto.getPrecioMoldeDigital());
+            statement.setDouble(6, producto.getPrecioMoldeCartulina());
+            statement.setInt(7, producto.getListado());
             statement.executeUpdate();
     
             try (ResultSet rs = statement.getGeneratedKeys()) {
@@ -140,7 +133,7 @@ public class ControladorAdmin extends ControladorBase {
     
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         configurarCORS(response);
-        String query = "UPDATE productos SET cliente = ?, nombre_producto = ?, id_categoria = ?, medida_busto = ?, medida_cintura = ?, medida_cadera = ?, precio_molde_base = ?, precio_molde_digital = ?, precio_molde_cartulina = ?, cantidad_talles = ?, listado = ? WHERE id_producto = ?";
+        String query = "UPDATE productos SET cliente = ?, nombre_producto = ?, id_categoria = ?, precio_molde_base = ?, precio_molde_digital = ?, precio_molde_cartulina = ?, listado = ? WHERE id_producto = ?";
         try (Connection conn = obtenerConexion();
              PreparedStatement statement = conn.prepareStatement(query)) {
     
@@ -151,15 +144,11 @@ public class ControladorAdmin extends ControladorBase {
             statement.setString(1, producto.getCliente());
             statement.setString(2, producto.getNombre());
             statement.setLong(3, producto.getIdCategoria());
-            statement.setLong(4, producto.getMedidaBusto());
-            statement.setLong(5, producto.getMedidaCintura());
-            statement.setLong(6, producto.getMedidaCadera());
-            statement.setDouble(7, producto.getPrecioMoldeBase());
-            statement.setDouble(8, producto.getPrecioMoldeDigital());
-            statement.setDouble(9, producto.getPrecioMoldeCartulina());
-            statement.setLong(10, producto.getCantidadTalles());
-            statement.setInt(11, producto.getListado());
-            statement.setLong(12, producto.getId());
+            statement.setDouble(4, producto.getPrecioMoldeBase());
+            statement.setDouble(5, producto.getPrecioMoldeDigital());
+            statement.setDouble(6, producto.getPrecioMoldeCartulina());
+            statement.setInt(7, producto.getListado());
+            statement.setLong(8, producto.getId());
     
             // Ejecutar la consulta de actualización
             int rowsUpdated = statement.executeUpdate();
