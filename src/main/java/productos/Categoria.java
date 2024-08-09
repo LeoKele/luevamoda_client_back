@@ -3,8 +3,16 @@ package productos;
 public class Categoria {
     private Long id;
     private String descripcion;
+    private int listado;
+
 
     public Categoria(){}
+
+    public Categoria(Long id, String descripcion, int listado){
+        this.id = id;
+        this.descripcion = descripcion;
+        this.listado = listado;
+    }
 
     public Categoria(Long id, String descripcion){
         this.id = id;
@@ -25,4 +33,7 @@ public class Categoria {
     public void setDescripcion(String descripcion){
         this.descripcion = descripcion;
     }
+
+    public int getListado(){return listado;}
+    public void setListado(int listado){this.listado = listado;}
 }
