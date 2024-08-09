@@ -20,7 +20,7 @@ public class ControladorFiltroCategoria extends ControladorBase {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         configurarCORS(response);
 
-        String query = "SELECT * FROM categoria_productos WHERE listado = 1 ORDER BY descripcion_categoria ASC";
+        String query = "SELECT * FROM categoria_productos WHERE listado = 1 ORDER BY descripcion_categoria ASC;";
 
 
         //Try-with-resources para cerrar correctamente la conexion
@@ -29,14 +29,14 @@ public class ControladorFiltroCategoria extends ControladorBase {
 
 
             ResultSet resultSet = statement.executeQuery();
-            List<Categoria> categorias = new ArrayList<>();
+            List<CategoriaDTO> categorias = new ArrayList<>();
 
             while (resultSet.next()) {
-                Categoria categoria = new Categoria(
+                CategoriaDTO categoriaDTO = new CategoriaDTO(
                         resultSet.getLong("id_categoria"),
                         resultSet.getString("descripcion_categoria")
                 );
-                categorias.add(categoria);
+                categorias.add(categoriaDTO);
             }
 
             ObjectMapper mapper = new ObjectMapper();
