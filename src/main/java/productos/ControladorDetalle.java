@@ -21,7 +21,7 @@ public class ControladorDetalle extends ControladorBase {
             throws ServletException, IOException {
         configurarCORS(response);
 
-        String query = "SELECT p.id_producto, p.nombre_producto, p.id_categoria, p.listado, COUNT(tp.id) AS cantidad_talles, GROUP_CONCAT(CONCAT(tp.talle, ':', tp.medida_busto, ':', tp.medida_cintura, ':', tp.medida_cadera) SEPARATOR '|') AS talles_info, COALESCE(i.imagenes, '') AS imagenes FROM productos p LEFT JOIN talles_productos tp ON p.id_producto = tp.id_producto LEFT JOIN (SELECT id_producto, GROUP_CONCAT(img_path ORDER BY img_path SEPARATOR ',') AS imagenes FROM imagenes_productos GROUP BY id_producto) i ON p.id_producto = i.id_producto WHERE p.listado = 1 GROUP BY p.id_producto, p.nombre_producto, p.id_categoria, p.listado;";
+        String query = "SELECT p.id_producto, p.nombre_producto, p.id_categoria, p.listado, p.precio_molde_base, COALESCE(i.imagenes, '') AS imagenes FROM productos p LEFT JOIN (SELECT id_producto, GROUP_CONCAT(img_path ORDER BY img_path SEPARATOR ',') AS imagenes FROM imagenes_productos GROUP BY id_producto) i ON p.id_producto = i.id_producto WHERE p.listado = 1 GROUP BY p.id_producto, p.nombre_producto, p.id_categoria, p.listado, p.precio_molde_base;";
 
         // Try-with-resources para cerrar correctamente la conexion
         try (Connection conn = obtenerConexion();
@@ -34,24 +34,24 @@ public class ControladorDetalle extends ControladorBase {
                 String nombre = resultSet.getString("nombre_producto");
                 Long idCategoria = resultSet.getLong("id_categoria");
                 String listado = resultSet.getString("listado");
-                Long cantidadTalles = resultSet.getLong("cantidad_talles");
                 String imagenes = resultSet.getString("imagenes");
+                Double precio = resultSet.getDouble("precio_molde_base");
 
-                String tallesInfo = resultSet.getString("talles_info");
-                List<Talle> talles = new ArrayList<>();
-                if (tallesInfo != null && !tallesInfo.isEmpty()) {
-                    String[] tallesArray = tallesInfo.split("\\|");
-                    for (String talleStr : tallesArray) {
-                        String[] talleData = talleStr.split(":");
-                        String talle = talleData[0];
-                        double medidaBusto = Double.parseDouble(talleData[1]);
-                        double medidaCintura = Double.parseDouble(talleData[2]);
-                        double medidaCadera = Double.parseDouble(talleData[3]);
-                        talles.add(new Talle(talle, medidaBusto, medidaCintura, medidaCadera));
-                    }
-                }
+                // String tallesInfo = resultSet.getString("talles_info");
+                // List<Talle> talles = new ArrayList<>();
+                // if (tallesInfo != null && !tallesInfo.isEmpty()) {
+                //     String[] tallesArray = tallesInfo.split("\\|");
+                //     for (String talleStr : tallesArray) {
+                //         String[] talleData = talleStr.split(":");
+                //         String talle = talleData[0];
+                //         double medidaBusto = Double.parseDouble(talleData[1]);
+                //         double medidaCintura = Double.parseDouble(talleData[2]);
+                //         double medidaCadera = Double.parseDouble(talleData[3]);
+                //         talles.add(new Talle(talle, medidaBusto, medidaCintura, medidaCadera));
+                //     }
+                // }
 
-                ProductoDetalle productoDetalle = new ProductoDetalle(id, nombre, idCategoria, listado, cantidadTalles, talles, imagenes);
+                ProductoDetalle productoDetalle = new ProductoDetalle(id, nombre, idCategoria, listado, imagenes, precio);
                 productos.add(productoDetalle);
             }
 
